@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>RibbsZn - Painel de Caixa</title>
+    <link rel="stylesheet" href="style.css" />
+    <style>
+      /* Estilos específicos do Caixa */
+      body {
+        background: #f4f4f4;
+        color: #333;
+      }
+      header {
+        background: var(--vermelho);
+        color: white;
+        padding: 20px;
+        font-size: 24px;
+        text-align: center;
+      }
+      .summary {
+        padding: 20px;
+        background: #fff;
+        margin: 20px;
+        border-radius: 10px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        display: flex;
+        justify-content: space-around;
+        font-size: 20px;
+      }
+      #pedidosCaixaContainer {
+        padding: 0 20px 20px;
+      }
+      .pedido-card {
+        background: #fff;
+        border: 1px solid #ddd;
+        margin-bottom: 10px;
+        padding: 15px;
+        border-radius: 8px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+      }
+      .pedido-card[data-status="PRONTO"] {
+        border-left: 5px solid #28a745;
+      }
+      .pedido-card[data-status="FINALIZADO"] {
+        opacity: 0.6;
+      }
+      .btn-finalizar {
+        background: #000;
+        color: white;
+        padding: 10px 15px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-weight: bold;
+      }
+    </style>
+  </head>
+  <body>
+    <header>Painel de Caixa & Gerenciamento</header>
+    <div class="summary">
+      <div>Total de Pedidos: <span id="totalPedidos">0</span></div>
+      <div>
+        Total Faturado (Finalizado): R$ <span id="totalFaturado">0.00</span>
+      </div>
+    </div>
+    <div id="pedidosCaixaContainer">
+      <h2>Carregando pedidos...</h2>
+    </div>
+    <script src="caixa.js"></script>
+  </body>
+</html>

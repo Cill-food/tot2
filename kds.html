@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>KDS - Sistema de Exibição de Cozinha Profissional</title>
+    <style>
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        margin: 0;
+        padding: 20px;
+        background-color: #1a1a1a;
+        color: #f0f0f0;
+        overflow: hidden; /* Previne scroll desnecessário */
+      }
+      h1 {
+        color: #ffd500;
+        border-bottom: 2px solid #ffd500;
+        padding-bottom: 10px;
+        margin-bottom: 20px;
+        font-size: 2em;
+        text-align: center;
+      }
+      #ordersContainer {
+        display: grid;
+        grid-template-columns: repeat(
+          auto-fit,
+          minmax(280px, 1fr)
+        ); /* Aumentado para cards maiores e profissionais */
+        gap: 20px;
+      }
+      .order-card {
+        background-color: #2c2c2c;
+        padding: 15px;
+        border-radius: 12px;
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.6);
+        border-left: 6px solid #ff4500; /* Cor de Pedido Pendente */
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+      }
+      .order-card.accepted {
+        border-left: 6px solid #ffa500; /* Cor de Pedido Aceito/Em Preparo */
+      }
+      .order-card.ready {
+        border-left: 6px solid #00c853; /* Cor de Pedido Pronto */
+      }
+      .order-card h2 {
+        margin-top: 0;
+        font-size: 1.5em;
+        color: #fff;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .order-card p {
+        margin: 5px 0;
+        font-size: 1em;
+      }
+      .order-card ul {
+        list-style: none;
+        padding: 0;
+        border-top: 1px solid #444;
+        margin-top: 10px;
+        padding-top: 10px;
+      }
+      .order-card ul li {
+        padding: 4px 0;
+        font-weight: bold;
+        color: #ffd500;
+        font-size: 1.1em;
+      }
+      .order-card ul li span.details {
+        font-weight: normal;
+        color: #bbb;
+        font-size: 0.9em;
+        display: block;
+      }
+      .status-tag {
+        background-color: #ff4500;
+        color: white;
+        padding: 4px 8px;
+        border-radius: 6px;
+        font-size: 0.9em;
+        font-weight: bold;
+        display: inline-block;
+        margin-bottom: 10px;
+      }
+      .order-card.accepted .status-tag {
+        background-color: #ffa500;
+      }
+      .order-card.ready .status-tag {
+        background-color: #00c853;
+      }
+      /* Botão Principal - Toggle Status */
+      .order-card .main-action-btn {
+        margin-top: 15px;
+        width: 100%;
+        padding: 10px;
+        font-size: 1em;
+        background-color: #ff4500;
+        border: none;
+        color: white;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: bold;
+        transition: background-color 0.2s, transform 0.1s;
+      }
+      .order-card.accepted .main-action-btn {
+        background-color: #ffa500;
+      }
+      .order-card.ready .main-action-btn {
+        background-color: #00c853;
+      }
+      .order-card .main-action-btn:hover {
+        transform: scale(1.02);
+      }
+      /* Grupo de Botões Secundários */
+      .button-group {
+        display: flex;
+        gap: 10px;
+        margin-top: 12px;
+      }
+      .button-group button {
+        flex-grow: 1;
+        background-color: #444;
+        color: white;
+        border: none;
+        padding: 8px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: bold;
+        transition: background-color 0.2s, transform 0.1s;
+        font-size: 0.9em;
+      }
+      .button-group button:hover {
+        background-color: #666;
+        transform: scale(1.02);
+      }
+      .button-group .delete-btn {
+        background-color: #d32f2f;
+      }
+      .button-group .delete-btn:hover {
+        background-color: #b71c1c;
+      }
+      /* ======================================= */
+      /* ESTILOS DO HISTÓRICO (Profissionalizado) */
+      /* ======================================= */
+      #historyToggleBtn {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background-color: #ffd500;
+        color: #222;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 8px;
+        font-weight: bold;
+        cursor: pointer;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+        z-index: 900;
+        transition: transform 0.3s ease, background-color 0.2s;
+      }
+      #historyToggleBtn:hover {
+        background-color: #ffc400;
+        transform: scale(1.05);
+      }
+      #historySidebar {
+        position: fixed;
+        bottom: 0;
+        right: 0;
+        width: 400px; /* Aumentado para mais espaço */
+        max-height: 90vh;
+        background-color: #1a1a1a;
+        box-shadow: -6px 0 12px rgba(0, 0, 0, 0.6);
+        transform: translateX(100%);
+        transition: transform 0.4s ease-in-out;
+        z-index: 1000;
+        display: flex;
+        flex-direction: column;
+        border-radius: 12px 0 0 0;
+        padding: 20px;
+        box-sizing: border-box;
+      }
+      #historySidebar.open {
+        transform: translateX(0);
+      }
+      #historyHeader {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-bottom: 12px;
+        border-bottom: 2px solid #555;
+        margin-bottom: 20px;
+      }
+      #historyHeader h3 {
+        color: #ffd500;
+        margin: 0;
+        font-size: 1.4em;
+      }
+      #minimizeHistoryBtn {
+        background: #444;
+        color: white;
+        border: none;
+        padding: 6px 12px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 1em;
+        transition: background-color 0.2s;
+      }
+      #minimizeHistoryBtn:hover {
+        background: #666;
+      }
+      /* Total da Caixa */
+      #historyTotalBox {
+        background-color: #383838;
+        padding: 12px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        text-align: center;
+        border: 1px solid #555;
+      }
+      #historyTotalBox h4 {
+        margin: 0;
+        font-size: 1.1em;
+        color: #ccc;
+        font-weight: normal;
+      }
+      #historyTotalValue {
+        margin: 6px 0 0 0;
+        font-size: 1.8em;
+        font-weight: bold;
+        color: #00c853;
+      }
+      #historyContent {
+        flex-grow: 1;
+        overflow-y: auto;
+        padding-right: 8px;
+      }
+      /* Estilo dos Cards de Histórico (Profissionalizado) */
+      .history-card {
+        background-color: #2a2a2a;
+        padding: 12px;
+        border-radius: 8px;
+        margin-bottom: 12px;
+        font-size: 0.95em;
+        border-left: 5px solid #00c853;
+        position: relative;
+        transition: box-shadow 0.2s;
+      }
+      .history-card:hover {
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+      }
+      .history-card p {
+        margin: 3px 0;
+      }
+      .history-card .details {
+        font-size: 0.85em;
+        color: #aaa;
+      }
+      .history-card .delete-btn {
+        background-color: #555;
+        color: #fff;
+        border: none;
+        padding: 5px 10px;
+        border-radius: 6px;
+        cursor: pointer;
+        float: right;
+        font-size: 0.8em;
+        margin-top: 6px;
+        transition: background-color 0.2s;
+      }
+      .history-card .delete-btn:hover {
+        background-color: #d32f2f;
+      }
+      /* Tag de Pagamento */
+      .history-card .payment-tag {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        background-color: #ffd500;
+        color: #222;
+        padding: 3px 8px;
+        border-radius: 6px;
+        font-size: 0.8em;
+        font-weight: bold;
+        margin-right: 85px;
+      }
+      /* ======================================= */
+      /* ESTILOS DO MODAL DE OBSERVAÇÃO (Profissionalizado) */
+      /* ======================================= */
+      #backdrop {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        z-index: 9999;
+        display: none;
+        justify-content: center;
+        align-items: center;
+      }
+      .kds-modal {
+        background: #2c2c2c;
+        color: #f0f0f0;
+        padding: 25px;
+        border-radius: 12px;
+        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.6);
+        width: 90%;
+        max-width: 450px;
+        display: none;
+        z-index: 10000;
+      }
+      .kds-modal h3 {
+        margin-top: 0;
+        color: #ffd500;
+        font-size: 1.4em;
+      }
+      .kds-modal textarea {
+        width: 100%;
+        min-height: 120px;
+        padding: 12px;
+        border-radius: 8px;
+        border: 1px solid #555;
+        background: #1a1a1a;
+        color: #f0f0f0;
+        box-sizing: border-box;
+        resize: vertical;
+        margin-bottom: 20px;
+        font-size: 1em;
+      }
+      .kds-modal .modal-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+      }
+      .kds-modal .modal-actions button {
+        padding: 10px 18px;
+        border-radius: 8px;
+        border: none;
+        cursor: pointer;
+        font-weight: bold;
+        transition: background-color 0.2s, transform 0.1s;
+      }
+      .kds-modal .modal-actions .cancel-btn {
+        background-color: #555;
+        color: #fff;
+      }
+      .kds-modal .modal-actions .cancel-btn:hover {
+        background-color: #777;
+      }
+      .kds-modal .modal-actions .confirm-btn {
+        background-color: #00c853;
+        color: #fff;
+      }
+      .kds-modal .modal-actions .confirm-btn:hover {
+        background-color: #00a53f;
+        transform: scale(1.02);
+      }
+      /* Adições profissionais: Responsividade */
+      @media (max-width: 768px) {
+        #ordersContainer {
+          grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        }
+        #historySidebar {
+          width: 100%;
+          border-radius: 0;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Pedidos Pendentes (KDS Profissional)</h1>
+    <div id="ordersContainer">
+      <p id="noOrdersMessage">Nenhum pedido pendente no momento.</p>
+    </div>
+
+    <button id="historyToggleBtn">Histórico de Pedidos</button>
+
+    <div id="historySidebar">
+      <div id="historyHeader">
+        <h3>Histórico de Pedidos Concluídos</h3>
+        <button id="minimizeHistoryBtn" onclick="toggleHistorySidebar()">
+          Minimizar
+        </button>
+      </div>
+
+      <div id="historyTotalBox">
+        <h4>Total da Caixa (Dia)</h4>
+        <p id="historyTotalValue">R$ 0,00</p>
+      </div>
+
+      <div id="historyContent">
+        <p id="noHistoryMessage" style="color: #888">
+          Nenhum pedido no histórico.
+        </p>
+      </div>
+    </div>
+
+    <div id="backdrop" style="display: none"></div>
+
+    <div id="popupObservacao" class="kds-modal">
+      <h3>Adicionar Observação ao Pedido</h3>
+      <p id="obsOrderInfo" style="font-size: 0.9em; color: #ccc"></p>
+      <textarea
+        id="obsTextarea"
+        placeholder="Digite a observação para este pedido..."
+      ></textarea>
+      <div class="modal-actions">
+        <button class="cancel-btn" onclick="closeModal('popupObservacao')">
+          Cancelar
+        </button>
+        <button class="confirm-btn" id="confirmObsBtn">
+          Confirmar (Enter)
+        </button>
+      </div>
+    </div>
+
+    <script src="kds.js"></script>
+  </body>
+</html>
